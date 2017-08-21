@@ -216,6 +216,6 @@ int main (int argc, char *argv[])
 
 	fprintf (stderr, "usage:\n"
 			 "\tjanus-service (status | usage)\n"
-			 "\ttjanus-service (start|stop) [opts]\n");
+			 "\tjanus-service (start|stop) [opts]\n");
 	return 1;
 }
