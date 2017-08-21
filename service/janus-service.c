@@ -126,7 +126,7 @@ static pid_t service_pid (void)
 		return -1;
 
 	if (fscanf (f, "%ld", &pid) != 1) {
-		warnx ("W: broken pidfile");
+		warnx ("W: broken pidfile: %s", pidfile);
 		pid = -1;
 	}
 
