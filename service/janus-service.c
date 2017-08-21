@@ -186,6 +186,11 @@ static void service_stop (const char *opts)
 	char *cmd;
 	int status;
 
+	if (!service_status (1)) {
+		printf ("Service %s is not running\n", desc);
+		exit (0);
+	}
+
 	fprintf (stderr, "\rStopping %s...", desc);
 
 	if (opts == NULL)
