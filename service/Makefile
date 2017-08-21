@@ -1,7 +1,7 @@
 TARGETS = janus-service
 
-CFLAGS += -Wall -O6
-LDFLAGS += -lncurses
+CFLAGS += -Wall -O6 `pkg-config --cflags --libs ncurses`
+LDFLAGS += `pkg-config --libs ncurses`
 
 all: $(TARGETS)
 
