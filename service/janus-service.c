@@ -123,22 +123,32 @@ static pid_t service_pid (void)
 	long pid;
 
 	if ((f = fopen (pidfile, "r")) == NULL)
-		err (1, "E: cannot open pidfile");
+		return -1;
 
-	if (fscanf (f, "%ld", &pid) != 1)
-		errx (1, "E: broken pidfile");
+	if (fscanf (f, "%ld", &pid) != 1) {
+		warnx ("W: broken pidfile");
+		pid = -1;
+	}
 
 	fclose (f);
 	return pid;
 }
 
-static void service_status (void)
+static int service_status (int quiet)
 {
-	int status = kill (service_pid (), 0) == 0;
+	int status;
+	pid_t pid;
 
-	printf ("Service %s is %srunning\n", desc, status ? "" : "not ");
+	if ((pid = service_pid ()) == -1)
+		status = 0;
+	else
+		status = kill (pid, 0) == 0;
 
-	exit (status ? 0 : 1);
+	if (!quiet)
+		printf ("Service %s is %srunning\n", desc,
+			status ? "" : "not ");
+
+	return status;
 }
 
 static void service_start (const char *opts)
@@ -147,7 +157,7 @@ static void service_start (const char *opts)
 	char *cmd;
 	int status;
 
-	if (kill (service_pid (), 0) == 0) {
+	if (service_status (1)) {
 		printf ("Service %s already running\n", desc);
 		exit (0);
 	}
@@ -203,7 +213,7 @@ int main (int argc, char *argv[])
 		return 0;
 
 	if (argc == 2 && strcmp (argv[1], "status") == 0)
-		service_status ();
+		return service_status (0) ? 0 : 1;
 	if (argc == 2 && strcmp (argv[1], "usage") == 0) {
 		fprintf (stderr, "usage:\n\t/etc/init.d/%s "
 				 "(start|stop|status|restart)\n", name);
