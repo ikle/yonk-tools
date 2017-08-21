@@ -17,7 +17,7 @@ static char *cuf, *el, *setaf, *op;
 
 static void term_init (void)
 {
-	const char *term = getenv ("TERM");
+	char *term = getenv ("TERM");
 
 	if (term == NULL || term[0] == '\0')
 		term = "ansi";
