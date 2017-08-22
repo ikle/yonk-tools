@@ -151,6 +151,20 @@ static int service_status (int quiet)
 	return status;
 }
 
+static int service_reload (void)
+{
+	int status;
+	pid_t pid;
+
+	if ((pid = service_pid ()) == -1)
+		status = 1;
+	else
+		status = kill (pid, SIGHUP) == 0 ? 0 : 1;
+
+	print_status ("Reload", desc, status == 0);
+	return status;
+}
+
 static int service_start (const char *opts)
 {
 	int len;
@@ -212,7 +226,7 @@ static int service_stop (const char *opts)
 static int service_usage (void)
 {
 	fprintf (stderr, "usage:\n\t/etc/init.d/%s "
-			 "(start|stop|status|restart)\n", name);
+			 "(start|stop|status|reload|restart)\n", name);
 	return 0;
 }
 
@@ -228,6 +242,9 @@ int main (int argc, char *argv[])
 	case 2:
 		if (strcmp (argv[1], "status") == 0)
 			return service_status (0);
+
+		if (strcmp (argv[1], "reload") == 0)
+			return service_reload ();
 
 		if (strcmp (argv[1], "usage") == 0)
 			return service_usage ();
@@ -247,7 +264,7 @@ int main (int argc, char *argv[])
 	}
 
 	fprintf (stderr, "usage:\n"
-			 "\tjanus-service (status | usage)\n"
+			 "\tjanus-service (reload|status|usage)\n"
 			 "\tjanus-service (start|stop|restart) [opts]\n");
 	return 1;
 }
