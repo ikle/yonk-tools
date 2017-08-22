@@ -212,7 +212,7 @@ static int service_stop (const char *opts)
 static int service_usage (void)
 {
 	fprintf (stderr, "usage:\n\t/etc/init.d/%s "
-			 "(start|stop|status)\n", name);
+			 "(start|stop|status|restart)\n", name);
 	return 0;
 }
 
@@ -239,10 +239,15 @@ int main (int argc, char *argv[])
 
 		if (strcmp (argv[1], "stop") == 0)
 			return service_stop (argv[2]);
+
+		if (strcmp (argv[1], "restart") == 0) {
+			(void) service_stop  (argv[2]);
+			return service_start (argv[2]);
+		}
 	}
 
 	fprintf (stderr, "usage:\n"
 			 "\tjanus-service (status | usage)\n"
-			 "\tjanus-service (start|stop) [opts]\n");
+			 "\tjanus-service (start|stop|restart) [opts]\n");
 	return 1;
 }
