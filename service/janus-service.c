@@ -209,6 +209,13 @@ static int service_stop (const char *opts)
 	return status;
 }
 
+static int service_usage (void)
+{
+	fprintf (stderr, "usage:\n\t/etc/init.d/%s "
+			 "(start|stop|status)\n", name);
+	return 0;
+}
+
 int main (int argc, char *argv[])
 {
 	service_init ();
@@ -217,17 +224,22 @@ int main (int argc, char *argv[])
 	if (access (daemon_path, X_OK) != 0)
 		return 0;
 
-	if (argc == 2 && strcmp (argv[1], "status") == 0)
-		return service_status (0);
-	if (argc == 2 && strcmp (argv[1], "usage") == 0) {
-		fprintf (stderr, "usage:\n\t/etc/init.d/%s "
-				 "(start|stop|status|restart)\n", name);
-		return 0;
+	switch (argc) {
+	case 2:
+		if (strcmp (argv[1], "status") == 0)
+			return service_status (0);
+
+		if (strcmp (argv[1], "usage") == 0)
+			return service_usage ();
+
+		/* pass throught, argv[2] is NULL */
+	case 3:
+		if (strcmp (argv[1], "start") == 0)
+			return service_start (argv[2]);
+
+		if (strcmp (argv[1], "stop") == 0)
+			return service_stop (argv[2]);
 	}
-	else if ((argc == 2 || argc == 3) && strcmp (argv[1], "start") == 0)
-		return service_start (argv[2]);
-	else if ((argc == 2 || argc == 3) && strcmp (argv[1], "stop") == 0)
-		return service_stop (argv[2]);
 
 	fprintf (stderr, "usage:\n"
 			 "\tjanus-service (status | usage)\n"
