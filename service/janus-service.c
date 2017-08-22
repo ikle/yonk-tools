@@ -140,9 +140,9 @@ static int service_status (int quiet)
 	pid_t pid;
 
 	if ((pid = service_pid ()) == -1)
-		status = 0;
+		status = 1;
 	else
-		status = kill (pid, 0) == 0;
+		status = kill (pid, 0) == 0 ? 0 : 1;
 
 	if (!quiet)
 		printf ("Service %s is %srunning\n", desc,
@@ -157,7 +157,7 @@ static int service_start (const char *opts)
 	char *cmd;
 	int status;
 
-	if (service_status (1)) {
+	if (service_status (1) == 0) {
 		printf ("Service %s already running\n", desc);
 		return 0;
 	}
@@ -186,7 +186,7 @@ static int service_stop (const char *opts)
 	char *cmd;
 	int status;
 
-	if (!service_status (1)) {
+	if (service_status (1) != 0) {
 		printf ("Service %s is not running\n", desc);
 		return 0;
 	}
@@ -218,7 +218,7 @@ int main (int argc, char *argv[])
 		return 0;
 
 	if (argc == 2 && strcmp (argv[1], "status") == 0)
-		return service_status (0) ? 0 : 1;
+		return service_status (0);
 	if (argc == 2 && strcmp (argv[1], "usage") == 0) {
 		fprintf (stderr, "usage:\n\t/etc/init.d/%s "
 				 "(start|stop|status|restart)\n", name);
