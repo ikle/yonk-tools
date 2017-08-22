@@ -219,6 +219,8 @@ static int service_stop (const char *opts)
 	status = system (cmd);
 	free (cmd);
 
+	(void) unlink (pidfile);
+
 	print_status ("Stop", desc, status == 0);
 	return status;
 }
