@@ -151,7 +151,7 @@ static int service_status (int quiet)
 	return status;
 }
 
-static void service_start (const char *opts)
+static int service_start (const char *opts)
 {
 	int len;
 	char *cmd;
@@ -159,7 +159,7 @@ static void service_start (const char *opts)
 
 	if (service_status (1)) {
 		printf ("Service %s already running\n", desc);
-		exit (0);
+		return 0;
 	}
 
 	fprintf (stderr, "\rStarting %s...", desc);
@@ -177,10 +177,10 @@ static void service_start (const char *opts)
 	free (cmd);
   
 	print_status ("Start", desc, status == 0);
-	exit (status);
+	return status;
 }
 
-static void service_stop (const char *opts)
+static int service_stop (const char *opts)
 {
 	int len;
 	char *cmd;
@@ -188,7 +188,7 @@ static void service_stop (const char *opts)
 
 	if (!service_status (1)) {
 		printf ("Service %s is not running\n", desc);
-		exit (0);
+		return 0;
 	}
 
 	fprintf (stderr, "\rStopping %s...", desc);
@@ -206,7 +206,7 @@ static void service_stop (const char *opts)
 	free (cmd);
 
 	print_status ("Stop", desc, status == 0);
-	exit (status);
+	return status;
 }
 
 int main (int argc, char *argv[])
@@ -225,9 +225,9 @@ int main (int argc, char *argv[])
 		return 0;
 	}
 	else if ((argc == 2 || argc == 3) && strcmp (argv[1], "start") == 0)
-		service_start (argv[2]);
+		return service_start (argv[2]);
 	else if ((argc == 2 || argc == 3) && strcmp (argv[1], "stop") == 0)
-		service_stop (argv[2]);
+		return service_stop (argv[2]);
 
 	fprintf (stderr, "usage:\n"
 			 "\tjanus-service (status | usage)\n"
