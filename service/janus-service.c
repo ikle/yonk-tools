@@ -55,10 +55,9 @@ static void term_op (FILE *to)
 		fprintf (to, "%s", tiparm (op));
 }
 
-static void print_status (const char *verb, const char *desc, int ok)
+static void print_term_status (FILE *to, const char *verb, const char *desc,
+			       int ok)
 {
-	FILE *to = stderr;
-
 	fprintf (to, "\r%s%s %s", tiparm (el), verb, desc);
 
 	term_pos (to, -8);
@@ -74,6 +73,16 @@ static void print_status (const char *verb, const char *desc, int ok)
 	}
 
 	term_op (to); fprintf (to, " ]\n");
+}
+
+static void print_status (const char *verb, const char *desc, int ok)
+{
+	FILE *to = stderr;
+
+	if (isatty (fileno (to)))
+		print_term_status (to, verb, desc, ok);
+	else
+		fprintf (to, "%s %s: %s\n", verb, desc, ok ? "ok" : "failed");
 
 	syslog (ok ? LOG_NOTICE: LOG_ERR, "%s %s: %s", verb, desc,
 		ok ? "ok" : "failed");
