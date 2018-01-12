@@ -155,7 +155,7 @@ static int service_status (int quiet)
 
 	if (!quiet)
 		printf ("Service %s is %srunning\n", desc,
-			status ? "" : "not ");
+			status == 0 ? "" : "not ");
 
 	return status;
 }
