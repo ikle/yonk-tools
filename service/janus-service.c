@@ -1,3 +1,11 @@
+/*
+ * Janus Service. Service start script helper
+ *
+ * Copyright (c) 2016-2017 Alexei A. Smekalkine <ikle@ikle.ru>
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
+
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
