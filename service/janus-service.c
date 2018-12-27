@@ -26,11 +26,13 @@ static char *cuf, *el, *setaf, *op;
 static void term_init (void)
 {
 	char *term = getenv ("TERM");
+	int err;
 
 	if (term == NULL || term[0] == '\0')
 		term = "ansi";
 
-	setupterm (term, 1, NULL);
+	if (setupterm (term, 1, &err) != OK)
+		return;
 
 	cuf   = tigetstr ("cuf");
 	el    = tigetstr ("el");
