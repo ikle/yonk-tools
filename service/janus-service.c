@@ -28,6 +28,9 @@ static void term_init (void)
 	char *term = getenv ("TERM");
 	int err;
 
+	if (!isatty (fileno (stderr)))
+		return;
+
 	if (term == NULL || term[0] == '\0')
 		term = "ansi";
 
