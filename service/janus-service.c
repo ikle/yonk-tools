@@ -21,6 +21,7 @@
 #include <curses.h>
 #include <term.h>
 
+static int silent;
 static char *cuf, *el, *setaf, *op;
 
 static void term_init (void)
@@ -92,13 +93,11 @@ static void print_status (const char *verb, const char *desc, int ok)
 {
 	FILE *to = stderr;
 
-	if (isatty (fileno (to)))
-		print_term_status (to, verb, desc, ok);
-	else
-		fprintf (to, "%s %s: %s\n", verb, desc, ok ? "ok" : "failed");
-
 	syslog (ok ? LOG_NOTICE: LOG_ERR, "%s %s: %s", verb, desc,
 		ok ? "ok" : "failed");
+
+	if (!silent)
+		print_term_status (to, verb, desc, ok);
 }
 
 static char *name, *desc, *daemon_path, *pidfile;
@@ -198,7 +197,8 @@ static int service_start (const char *opts)
 		return 0;
 	}
 
-	fprintf (stderr, "\rStarting %s...", desc);
+	if (!silent)
+		fprintf (stderr, "\rStarting %s...", desc);
 
 	if (opts == NULL)
 		opts = "";
@@ -227,7 +227,8 @@ static int service_stop (const char *opts)
 		return 0;
 	}
 
-	fprintf (stderr, "\rStopping %s...", desc);
+	if (!silent)
+		fprintf (stderr, "\rStopping %s...", desc);
 
 	if (opts == NULL)
 		opts = "";
@@ -256,6 +257,9 @@ static int service_usage (void)
 
 int main (int argc, char *argv[])
 {
+	if (!isatty (fileno (stderr)))
+		silent = 1;
+
 	service_init ();
 	term_init ();
 
@@ -265,7 +269,7 @@ int main (int argc, char *argv[])
 	switch (argc) {
 	case 2:
 		if (strcmp (argv[1], "status") == 0)
-			return service_status (0);
+			return service_status (silent);
 
 		if (strcmp (argv[1], "reload") == 0)
 			return service_reload ();
