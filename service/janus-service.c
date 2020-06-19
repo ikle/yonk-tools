@@ -159,11 +159,19 @@ static int service_status (int quiet)
 {
 	int status;
 	pid_t pid;
+	char path[32];  /* strlen ("/proc/" + (2^64 - 1)) = 24 */
 
 	if ((pid = service_pid ()) == -1)
 		status = 1;
-	else
-		status = kill (pid, 0) == 0 ? 0 : 1;
+	else if (kill (pid, 0) == 0)
+		status = 0;
+	else if (errno == ESRCH)
+		status = 1;
+	else {
+		snprintf (path, sizeof (path), "/proc/%lu",
+			  (unsigned long) pid);
+		status = access (path, F_OK) == 0 ? 0 : 1;
+	}
 
 	if (!quiet)
 		printf ("Service %s is %srunning\n", desc,
