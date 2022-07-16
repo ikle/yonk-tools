@@ -69,8 +69,8 @@ static void term_op (FILE *to)
 		fprintf (to, "%s", tiparm (op));
 }
 
-static void print_term_status (FILE *to, const char *verb, const char *desc,
-			       int ok)
+static
+void print_term_status (FILE *to, const char *verb, const char *desc, int ok)
 {
 	fprintf (to, "\r%s%s %s", tiparm (el), verb, desc);
 
@@ -93,7 +93,7 @@ static void print_status (const char *verb, const char *desc, int ok)
 {
 	FILE *to = stderr;
 
-	syslog (ok ? LOG_NOTICE: LOG_ERR, "%s %s: %s", verb, desc,
+	syslog (ok ? LOG_NOTICE : LOG_ERR, "%s %s: %s", verb, desc,
 		ok ? "ok" : "failed");
 
 	if (!silent)
@@ -102,10 +102,8 @@ static void print_status (const char *verb, const char *desc, int ok)
 
 static char *name, *desc, *daemon_path, *pidfile;
 
-#define DAEMON_FMT	"/usr/sbin/%s"
-#define PIDFILE_FMT	"/var/run/%s.pid"
-#define START_FMT	"start-stop-daemon -q -S -p %s -x %s %s"
-#define STOP_FMT	"start-stop-daemon -q -K -o -p %s %s"
+#define DAEMON_FMT   "/usr/sbin/%s"
+#define PIDFILE_FMT  "/var/run/%s.pid"
 
 static void service_init (void)
 {
@@ -194,6 +192,8 @@ static int service_reload (void)
 	return status;
 }
 
+#define START_FMT  "start-stop-daemon -q -S -p %s -x %s %s"
+
 static int service_start (const char *opts)
 {
 	int len;
@@ -223,6 +223,8 @@ static int service_start (const char *opts)
 	print_status ("Start", desc, status == 0);
 	return status;
 }
+
+#define STOP_FMT  "start-stop-daemon -q -K -o -p %s %s"
 
 static int service_stop (const char *opts)
 {
@@ -265,8 +267,7 @@ static int service_usage (void)
 
 int main (int argc, char *argv[])
 {
-	if (!isatty (fileno (stderr)))
-		silent = 1;
+	silent = !isatty (fileno (stderr));
 
 	service_init ();
 	term_init ();
