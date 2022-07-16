@@ -1,7 +1,7 @@
 /*
- * Janus Service. Service start script helper
+ * Yonk Service: service start-stop helper
  *
- * Copyright (c) 2016-2017 Alexei A. Smekalkine <ikle@ikle.ru>
+ * Copyright (c) 2016-2022 Alexei A. Smekalkine <ikle@ikle.ru>
  *
  * SPDX-License-Identifier: BSD-2-Clause
  */
@@ -38,10 +38,10 @@ static void term_init (void)
 	if (setupterm (term, 1, &err) != OK)
 		return;
 
-	cuf   = tigetstr ("cuf");
-	el    = tigetstr ("el");
-	setaf = tigetstr ("setaf");
-	op    = tigetstr ("op");
+	cuf   = tigetstr ("cuf");	/* cursor forward	*/
+	el    = tigetstr ("el");	/* clear to end of line	*/
+	setaf = tigetstr ("setaf");	/* set foreground color	*/
+	op    = tigetstr ("op");	/* set default attrs	*/
 }
 
 static void term_pos (FILE *to, int pos)
