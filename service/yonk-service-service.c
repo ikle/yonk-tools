@@ -196,6 +196,8 @@ static int service_reload (void)
 
 static int service_start (const char *opts)
 {
+	char *args = getenv ("ARGS");
+	const char *fmt = (args == NULL) ? START_FMT : START_FMT " -- %s";
 	int len;
 	char *cmd;
 	int status;
@@ -213,12 +215,12 @@ static int service_start (const char *opts)
 	if (opts == NULL)
 		opts = "";
 
-	len = snprintf (NULL, 0, START_FMT, pidfile, daemon_path, opts) + 1;
+	len = snprintf (NULL, 0, fmt, pidfile, daemon_path, opts, args) + 1;
 
 	if ((cmd = malloc (len)) == NULL)
 		err (1, "E");
 
-	snprintf (cmd, len, START_FMT, pidfile, daemon_path, opts);
+	snprintf (cmd, len, fmt, pidfile, daemon_path, opts, args);
 	status = system (cmd);
 	free (cmd);
   
