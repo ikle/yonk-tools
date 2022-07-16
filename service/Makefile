@@ -1,15 +1,9 @@
-TARGETS = janus-service
+DESCRIPTION = Yonk service start-stop helper
+URL = https://github.com/ikle/yonk-tools
 
-CFLAGS += -Wall -O6 `pkg-config --cflags --libs ncurses`
-LDFLAGS += `pkg-config --libs ncurses`
+LIBVER	= 0
+LIBREV	= 0.1
 
-all: $(TARGETS)
+DEPENDS	= ncurses
 
-clean:
-	rm -f *.o $(TARGETS)
-
-PREFIX ?= /usr/local
-
-install: $(TARGETS)
-	install -D -d $(DESTDIR)/$(PREFIX)/bin
-	install -s -m 0755 $^ $(DESTDIR)/$(PREFIX)/bin
+include ../make-core.mk
