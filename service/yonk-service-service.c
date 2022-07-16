@@ -171,9 +171,9 @@ static int service_status (int quiet)
 		status = access (path, F_OK) == 0 ? 0 : 1;
 	}
 
-	if (!quiet)
-		printf ("Service %s is %srunning\n", desc,
-			status == 0 ? "" : "not ");
+	if (!quiet && !silent)
+		fprintf (stderr, "Service %s is %srunning\n", desc,
+			 status == 0 ? "" : "not ");
 
 	return status;
 }
@@ -201,7 +201,9 @@ static int service_start (const char *opts)
 	int status;
 
 	if (service_status (1) == 0) {
-		printf ("Service %s already running\n", desc);
+		if (!silent)
+			fprintf (stderr, "Service %s already running\n", desc);
+
 		return 0;
 	}
 
