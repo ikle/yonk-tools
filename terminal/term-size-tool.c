@@ -108,7 +108,7 @@ int main (int argc, char *argv[])
 	if (!term_req_window_size (0, &w, &h))
 		errx (1, "cannot get terminal size from terminal");
 
-	printf ("terminal size: cols %u lines %u\n", w, h);
+	fprintf (stderr, "terminal size: cols %u lines %u\n", w, h);
 
 	if (!term_set_window_size (0, w, h))
 		err (1, "cannot set terminal window size");
