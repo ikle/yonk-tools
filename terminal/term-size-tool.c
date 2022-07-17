@@ -1,7 +1,7 @@
 /*
  * Utility to set terminal window size to real terminal size
  *
- * Copyright (c) 2017-2018 Alexei A. Smekalkine <ikle@ikle.ru>
+ * Copyright (c) 2017-2022 Alexei A. Smekalkine <ikle@ikle.ru>
  *
  * SPDX-License-Identifier: BSD-2-Clause
  */
@@ -16,7 +16,7 @@
 #include <termios.h>
 #include <unistd.h>
 
-int term_get_window_size (int fd, unsigned *w, unsigned *h)
+static int term_get_window_size (int fd, unsigned *w, unsigned *h)
 {
 	struct winsize ws;
 
@@ -29,7 +29,7 @@ int term_get_window_size (int fd, unsigned *w, unsigned *h)
 	return 1;
 }
 
-int term_set_window_size (int fd, unsigned w, unsigned h)
+static int term_set_window_size (int fd, unsigned w, unsigned h)
 {
 	struct winsize ws;
 
@@ -41,7 +41,7 @@ int term_set_window_size (int fd, unsigned w, unsigned h)
 	return ioctl (fd, TIOCSWINSZ, &ws) == 0;
 }
 
-ssize_t read_timeout(int fd, void *buf, size_t count, int timeout)
+static ssize_t read_timeout(int fd, void *buf, size_t count, int timeout)
 {
 	struct pollfd p;
 	int ret;
@@ -55,7 +55,7 @@ ssize_t read_timeout(int fd, void *buf, size_t count, int timeout)
 	return read (fd, buf, count);
 }
 
-int term_req_window_size (int fd, unsigned *w, unsigned *h)
+static int term_req_window_size (int fd, unsigned *w, unsigned *h)
 {
 	static const char magic[] =
 		"\0337\033[s"	/* DECSC, CSI save cursor */
