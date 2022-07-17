@@ -238,7 +238,7 @@ static int service_stop (const char *opts)
 	int status;
 
 	if (service_status (1) != 0) {
-		printf ("Service %s is not running\n", desc);
+		print_status ("Stop", desc, 1);
 		return 0;
 	}
 
