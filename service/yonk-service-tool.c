@@ -21,7 +21,7 @@
 #include <curses.h>
 #include <term.h>
 
-static int silent;
+static int silent, daemonize;
 static char *cuf, *el, *setaf, *op;
 
 static void term_init (void)
@@ -192,12 +192,13 @@ static int service_reload (void)
 	return status;
 }
 
-#define START_FMT  "start-stop-daemon -q -S -p %s -x %s %s"
+#define START_FMT  "start-stop-daemon -q -S -p %s -x %s %s %s"
 
 static int service_start (const char *opts)
 {
 	char *args = getenv ("ARGS");
 	const char *fmt = (args == NULL) ? START_FMT : START_FMT " -- %s";
+	const char *bg = daemonize ? "-m -b" : "";
 	int len;
 	char *cmd;
 	int status;
@@ -215,12 +216,12 @@ static int service_start (const char *opts)
 	if (opts == NULL)
 		opts = "";
 
-	len = snprintf (NULL, 0, fmt, pidfile, daemon_path, opts, args) + 1;
+	len = snprintf (NULL, 0, fmt, pidfile, daemon_path, bg, opts, args) + 1;
 
 	if ((cmd = malloc (len)) == NULL)
 		err (1, "E");
 
-	snprintf (cmd, len, fmt, pidfile, daemon_path, opts, args);
+	snprintf (cmd, len, fmt, pidfile, daemon_path, bg, opts, args);
 	status = system (cmd);
 	free (cmd);
   
@@ -278,6 +279,9 @@ int main (int argc, char *argv[])
 
 	if (access (daemon_path, X_OK) != 0)
 		return 0;
+
+	if (argc > 1 && strcmp (argv[1], "-d") == 0)
+		daemonize = 1, --argc, ++argv;
 
 	switch (argc) {
 	case 2:
