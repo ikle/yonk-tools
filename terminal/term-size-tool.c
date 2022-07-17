@@ -25,7 +25,6 @@ static int term_get_window_size (int fd, unsigned *w, unsigned *h)
 
 	*w = ws.ws_col;
 	*h = ws.ws_row;
-
 	return 1;
 }
 
@@ -35,8 +34,8 @@ static int term_set_window_size (int fd, unsigned w, unsigned h)
 
 	memset (&ws, 0, sizeof (ws));
 
-	ws.ws_col    = w;
-	ws.ws_row    = h;
+	ws.ws_col = w;
+	ws.ws_row = h;
 
 	return ioctl (fd, TIOCSWINSZ, &ws) == 0;
 }
