@@ -309,7 +309,7 @@ int main (int argc, char *argv[])
 	}
 
 	fprintf (stderr, "usage:\n"
-			 "\tjanus-service (reload|status|usage)\n"
-			 "\tjanus-service (start|stop|restart) [opts]\n");
+			 "\tyonk-service (reload|status|usage)\n"
+			 "\tyonk-service [-d] (start|stop|restart) [opts]\n");
 	return 1;
 }
