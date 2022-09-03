@@ -21,7 +21,7 @@
 #include <curses.h>
 #include <term.h>
 
-static int silent, daemonize;
+static int daemonize;
 static char *cuf, *el, *setaf, *op;
 
 static void term_init (void)
@@ -93,7 +93,8 @@ void print_term_status (FILE *to, const char *verb, const char *desc, int ok)
 	term_op (to); fprintf (to, " ]\n");
 }
 
-static void print_status (const char *verb, const char *desc, int ok)
+static
+void print_status (const char *verb, const char *desc, int ok, int silent)
 {
 	FILE *to = stderr;
 
@@ -159,7 +160,7 @@ static pid_t service_pid (void)
 	return pid;
 }
 
-static int service_status (int quiet)
+static int service_status (int silent)
 {
 	int status;
 	pid_t pid;
@@ -177,14 +178,14 @@ static int service_status (int quiet)
 		status = access (path, F_OK) == 0 ? 0 : 1;
 	}
 
-	if (!quiet && !silent)
+	if (!silent)
 		fprintf (stderr, "Service %s is %srunning\n", desc,
 			 status == 0 ? "" : "not ");
 
 	return status;
 }
 
-static int service_reload (void)
+static int service_reload (int silent)
 {
 	int status;
 	pid_t pid;
@@ -194,13 +195,13 @@ static int service_reload (void)
 	else
 		status = kill (pid, SIGHUP) == 0 ? 0 : 1;
 
-	print_status ("Reload", desc, status == 0);
+	print_status ("Reload", desc, status == 0, silent);
 	return status;
 }
 
 #define START_FMT  "start-stop-daemon -q -S -p %s -x %s %s %s"
 
-static int service_start (const char *opts)
+static int service_start (const char *opts, int silent)
 {
 	char *args = getenv ("ARGS");
 	const char *fmt = (args == NULL) ? START_FMT : START_FMT " -- %s";
@@ -210,7 +211,7 @@ static int service_start (const char *opts)
 	int status;
 
 	if (conf != NULL && access (conf, R_OK) != 0) {
-		print_status ("Start", desc, -1);
+		print_status ("Start", desc, -1, silent);
 		return 0;
 	}
 
@@ -236,20 +237,20 @@ static int service_start (const char *opts)
 	status = system (cmd);
 	free (cmd);
   
-	print_status ("Start", desc, status == 0);
+	print_status ("Start", desc, status == 0, silent);
 	return status;
 }
 
 #define STOP_FMT  "start-stop-daemon -q -K -o -p %s %s"
 
-static int service_stop (const char *opts)
+static int service_stop (const char *opts, int silent)
 {
 	int len;
 	char *cmd;
 	int status;
 
 	if (service_status (1) != 0) {
-		print_status ("Stop", desc, 1);
+		print_status ("Stop", desc, 1, silent);
 		return 0;
 	}
 
@@ -270,7 +271,7 @@ static int service_stop (const char *opts)
 
 	(void) unlink (pidfile);
 
-	print_status ("Stop", desc, status == 0);
+	print_status ("Stop", desc, status == 0, silent);
 	return status;
 }
 
@@ -283,7 +284,7 @@ static int service_usage (void)
 
 int main (int argc, char *argv[])
 {
-	silent = !isatty (fileno (stderr));
+	int silent = !isatty (fileno (stderr));
 
 	service_init ();
 	term_init ();
@@ -300,7 +301,7 @@ int main (int argc, char *argv[])
 			return service_status (silent);
 
 		if (strcmp (argv[1], "reload") == 0)
-			return service_reload ();
+			return service_reload (silent);
 
 		if (strcmp (argv[1], "usage") == 0)
 			return service_usage ();
@@ -308,14 +309,14 @@ int main (int argc, char *argv[])
 		/* pass throught, argv[2] is NULL */
 	case 3:
 		if (strcmp (argv[1], "start") == 0)
-			return service_start (argv[2]);
+			return service_start (argv[2], silent);
 
 		if (strcmp (argv[1], "stop") == 0)
-			return service_stop (argv[2]);
+			return service_stop (argv[2], silent);
 
 		if (strcmp (argv[1], "restart") == 0) {
-			(void) service_stop  (argv[2]);
-			return service_start (argv[2]);
+			(void) service_stop  (argv[2], silent);
+			return service_start (argv[2], silent);
 		}
 	}
 
