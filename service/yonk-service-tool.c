@@ -77,9 +77,13 @@ void print_term_status (FILE *to, const char *verb, const char *desc, int ok)
 	term_pos (to, -8);
 	fprintf (to, "[ ");
 
-	if (ok) {
+	if (ok > 0) {
 		term_setaf (to, COLOR_GREEN);
 		fprintf (to, " ok ");
+	}
+	else if (ok < 0) {
+		term_setaf (to, COLOR_YELLOW);
+		fprintf (to, "skip");
 	}
 	else {
 		term_setaf (to, COLOR_RED);
@@ -94,13 +98,13 @@ static void print_status (const char *verb, const char *desc, int ok)
 	FILE *to = stderr;
 
 	syslog (ok ? LOG_NOTICE : LOG_ERR, "%s %s: %s", verb, desc,
-		ok ? "ok" : "failed");
+		ok > 0 ? "ok" : ok < 0 ? "skipped" : "failed");
 
 	if (!silent)
 		print_term_status (to, verb, desc, ok);
 }
 
-static char *name, *desc, *daemon_path, *pidfile;
+static char *name, *desc, *daemon_path, *pidfile, *conf;
 
 #define DAEMON_FMT   "/usr/sbin/%s"
 #define PIDFILE_FMT  "/var/run/%s.pid"
@@ -132,6 +136,8 @@ static void service_init (void)
 
 		snprintf (pidfile, len, PIDFILE_FMT, name);
 	}
+
+	conf = getenv ("CONF");
 
 	openlog (name, 0, LOG_DAEMON);
 }
@@ -202,6 +208,11 @@ static int service_start (const char *opts)
 	int len;
 	char *cmd;
 	int status;
+
+	if (conf != NULL && access (conf, R_OK) != 0) {
+		print_status ("Start", desc, -1);
+		return 0;
+	}
 
 	if (service_status (1) == 0) {
 		if (!silent)
