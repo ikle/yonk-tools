@@ -104,10 +104,12 @@ void print_status (const char *verb, const char *desc, int ok, int silent)
 		print_term_status (stderr, verb, desc, ok);
 }
 
-static char *name, *desc, *daemon_path, *pidfile, *conf;
+static char *bundle, *name, *desc, *daemon_path, *pidfile, *conf;
 
 static void service_init (void)
 {
+	bundle = getenv ("BUNDLE");
+
 	if ((name = getenv ("NAME")) == NULL)
 		errx (1, "E: service name required");
 
@@ -117,14 +119,24 @@ static void service_init (void)
 	if ((daemon_path = getenv ("DAEMON")) == NULL) {
 		static char buf[128];
 
-		snprintf (buf, sizeof (buf), "/usr/sbin/%s", name);
+		if (bundle != NULL)
+			snprintf (buf, sizeof (buf), "/usr/lib/%s/%s",
+				  bundle, name);
+		else
+			snprintf (buf, sizeof (buf), "/usr/sbin/%s", name);
+
 		daemon_path = buf;
 	}
 
 	if ((pidfile = getenv ("PIDFILE")) == NULL) {
 		static char buf[128];
 
-		snprintf (buf, sizeof (buf), "/var/run/%s.pid", name);
+		if (bundle != NULL)
+			snprintf (buf, sizeof (buf), "/var/run/%s/%s.pid",
+				  bundle, name);
+		else
+			snprintf (buf, sizeof (buf), "/var/run/%s.pid", name);
+
 		pidfile = buf;
 	}
 
