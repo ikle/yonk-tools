@@ -207,7 +207,7 @@ static int service_start (const char *opts, int silent, int restart)
 
 	if (service_is_running ()) {
 		if (!silent)
-			fprintf (stderr, "Service %s already running\n", desc);
+			fprintf (stderr, "%s already running\n", desc);
 
 		return 0;
 	}
