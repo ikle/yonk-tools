@@ -234,16 +234,15 @@ static int service_start (const char *opts, int silent, int restart)
 static int service_stop (void)
 {
 	pid_t pid;
-	int ok;
 
 	if ((pid = service_pid ()) == -1)
 		return 0;
 
-	ok = kill (pid, SIGTERM) == 0;
+	if (kill (pid, SIGTERM) != 0)
+		return 0;
 
 	(void) unlink (pidfile);
-
-	return ok;
+	return 1;
 }
 
 static int do_service_status (int silent)
