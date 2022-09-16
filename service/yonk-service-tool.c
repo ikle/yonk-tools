@@ -117,7 +117,7 @@ static void service_init (void)
 		errx (1, "E: service name required");
 
 	if ((desc = getenv ("DESC")) == NULL)
-		desc = name;
+		errx (1, "E: service description required");
 
 	if ((daemon_path = getenv ("DAEMON")) == NULL) {
 		len = snprintf (NULL, 0, DAEMON_FMT, name) + 1;
