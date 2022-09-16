@@ -189,9 +189,9 @@ static int service_reload (void)
 	return kill (pid, SIGHUP) == 0;
 }
 
-#define START_FMT  "start-stop-daemon -q -S -p %s -x %s %s %s"
+#define START_FMT  "start-stop-daemon -q -S -p %s -x %s %s"
 
-static int service_start (const char *opts, int silent, int restart)
+static int service_start (int silent, int restart)
 {
 	char *args = getenv ("ARGS");
 	const char *fmt = (args == NULL) ? START_FMT : START_FMT " -- %s";
@@ -215,15 +215,12 @@ static int service_start (const char *opts, int silent, int restart)
 	if (!silent)
 		fprintf (stderr, "\rStarting %s...", desc);
 
-	if (opts == NULL)
-		opts = "";
-
-	len = snprintf (NULL, 0, fmt, pidfile, daemon_path, bg, opts, args) + 1;
+	len = snprintf (NULL, 0, fmt, pidfile, daemon_path, bg, args) + 1;
 
 	if ((cmd = malloc (len)) == NULL)
 		err (1, "E");
 
-	snprintf (cmd, len, fmt, pidfile, daemon_path, bg, opts, args);
+	snprintf (cmd, len, fmt, pidfile, daemon_path, bg, args);
 	status = system (cmd);
 	free (cmd);
   
@@ -318,14 +315,14 @@ int main (int argc, char *argv[])
 		/* pass throught, argv[2] is NULL */
 	case 3:
 		if (strcmp (argv[1], "start") == 0)
-			return service_start (argv[2], silent, 0);
+			return service_start (silent, 0);
 
 		if (strcmp (argv[1], "stop") == 0)
 			return do_service_stop (silent, 0);
 
 		if (strcmp (argv[1], "restart") == 0) {
 			(void) do_service_stop  (silent, 1);
-			return service_start (argv[2], silent, 1);
+			return service_start (silent, 1);
 		}
 	}
 
