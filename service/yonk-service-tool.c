@@ -255,6 +255,13 @@ static int do_service_reload (int silent)
 	return ok ? 0 : 1;
 }
 
+static int do_service_usage (void)
+{
+	fprintf (stderr, "usage:\n\t/etc/init.d/%s "
+			 "(start|stop|status|reload|restart)\n", name);
+	return 0;
+}
+
 static int do_service_start (int silent, int restart)
 {
 	int ok;
@@ -291,13 +298,6 @@ static int do_service_stop (int silent, int restart)
 	return ok ? 0 : 1;
 }
 
-static int service_usage (void)
-{
-	fprintf (stderr, "usage:\n\t/etc/init.d/%s "
-			 "(start|stop|status|reload|restart)\n", name);
-	return 0;
-}
-
 int main (int argc, char *argv[])
 {
 	int silent = !isatty (fileno (stderr));
@@ -320,7 +320,7 @@ int main (int argc, char *argv[])
 			return do_service_reload (silent);
 
 		if (strcmp (argv[1], "usage") == 0)
-			return service_usage ();
+			return do_service_usage ();
 
 		if (strcmp (argv[1], "start") == 0)
 			return do_service_start (silent, 0);
