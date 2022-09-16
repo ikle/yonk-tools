@@ -96,13 +96,11 @@ void print_term_status (FILE *to, const char *verb, const char *desc, int ok)
 static
 void print_status (const char *verb, const char *desc, int ok, int silent)
 {
-	FILE *to = stderr;
-
 	syslog (ok ? LOG_NOTICE : LOG_ERR, "%s %s: %s", verb, desc,
 		ok > 0 ? "ok" : ok < 0 ? "skipped" : "failed");
 
 	if (!silent)
-		print_term_status (to, verb, desc, ok);
+		print_term_status (stderr, verb, desc, ok);
 }
 
 static char *name, *desc, *daemon_path, *pidfile, *conf;
