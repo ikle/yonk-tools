@@ -181,18 +181,14 @@ static int service_is_running (void)
 	return access (path, F_OK) == 0;
 }
 
-static int service_reload (int silent)
+static int service_reload (void)
 {
-	int status;
 	pid_t pid;
 
 	if ((pid = service_pid ()) == -1)
-		status = 1;
-	else
-		status = kill (pid, SIGHUP) == 0 ? 0 : 1;
+		return 0;
 
-	print_status ("Reload", desc, status == 0, silent);
-	return status;
+	return kill (pid, SIGHUP) == 0;
 }
 
 #define START_FMT  "start-stop-daemon -q -S -p %s -x %s %s %s"
@@ -282,6 +278,14 @@ static int do_service_status (int silent)
 	return ok ? 0 : 1;
 }
 
+static int do_service_reload (int silent)
+{
+	int ok = service_reload ();
+
+	print_status ("Reload", desc, ok, silent);
+	return ok ? 0 : 1;
+}
+
 static int service_usage (void)
 {
 	fprintf (stderr, "usage:\n\t/etc/init.d/%s "
@@ -308,7 +312,7 @@ int main (int argc, char *argv[])
 			return do_service_status (silent);
 
 		if (strcmp (argv[1], "reload") == 0)
-			return service_reload (silent);
+			return do_service_reload (silent);
 
 		if (strcmp (argv[1], "usage") == 0)
 			return service_usage ();
