@@ -234,11 +234,18 @@ static int service_start (const char *opts, int silent, int restart)
 static int service_stop (void)
 {
 	pid_t pid;
+	int timeout;
 
 	if ((pid = service_pid ()) == -1)
 		return 0;
 
 	if (kill (pid, SIGTERM) != 0)
+		return 0;
+
+	for (timeout = 5; service_is_running () && timeout > 0; --timeout)
+		sleep (1);
+
+	if (timeout == 0 && kill (pid, SIGKILL) != 0)
 		return 0;
 
 	(void) unlink (pidfile);
