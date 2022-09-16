@@ -96,7 +96,8 @@ void print_term_status (FILE *to, const char *verb, const char *desc, int ok)
 static
 void print_status (const char *verb, const char *desc, int ok, int silent)
 {
-	syslog (ok != 0 ? LOG_NOTICE : LOG_ERR, "%s %s: %s", verb, desc,
+	syslog (ok > 0 ? LOG_NOTICE : ok < 0 ? LOG_INFO : LOG_ERR,
+		"%s %s: %s", verb, desc,
 		ok > 0 ? "ok" : ok < 0 ? "skipped" : "failed");
 
 	if (!silent)
