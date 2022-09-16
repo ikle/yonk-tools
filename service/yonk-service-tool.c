@@ -231,25 +231,15 @@ static int service_start (const char *opts, int silent, int restart)
 	return status;
 }
 
-#define STOP_FMT  "start-stop-daemon -q -K -o -p %s"
-
 static int service_stop (void)
 {
-	int len;
-	char *cmd;
+	pid_t pid;
 	int ok;
 
-	if (!service_is_running ())
-		return 1;
+	if ((pid = service_pid ()) == -1)
+		return 0;
 
-	len = snprintf (NULL, 0, STOP_FMT, pidfile) + 1;
-
-	if ((cmd = malloc (len)) == NULL)
-		err (1, "E");
-
-	snprintf (cmd, len, STOP_FMT, pidfile);
-	ok = system (cmd) == 0;
-	free (cmd);
+	ok = kill (pid, SIGTERM) == 0;
 
 	(void) unlink (pidfile);
 
