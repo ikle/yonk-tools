@@ -108,10 +108,6 @@ static char *name, *desc, *daemon_path, *pidfile, *conf;
 
 static void service_init (void)
 {
-	const char *daemon_fmt  = "/usr/sbin/%s";
-	const char *pidfile_fmt = "/var/run/%s.pid";
-	int len;
-
 	if ((name = getenv ("NAME")) == NULL)
 		errx (1, "E: service name required");
 
@@ -119,21 +115,17 @@ static void service_init (void)
 		errx (1, "E: service description required");
 
 	if ((daemon_path = getenv ("DAEMON")) == NULL) {
-		len = snprintf (NULL, 0, daemon_fmt, name) + 1;
+		static char buf[128];
 
-		if ((daemon_path = malloc (len)) == NULL)
-			err (1, "E");
-
-		snprintf (daemon_path, len, daemon_fmt, name);
+		snprintf (buf, sizeof (buf), "/usr/sbin/%s", name);
+		daemon_path = buf;
 	}
 
 	if ((pidfile = getenv ("PIDFILE")) == NULL) {
-		len = snprintf (NULL, 0, pidfile_fmt, name) + 1;
+		static char buf[128];
 
-		if ((pidfile = malloc (len)) == NULL)
-			err (1, "E");
-
-		snprintf (pidfile, len, pidfile_fmt, name);
+		snprintf (buf, sizeof (buf), "/var/run/%s.pid", name);
+		pidfile = buf;
 	}
 
 	conf = getenv ("CONF");
