@@ -322,8 +322,6 @@ int main (int argc, char *argv[])
 		if (strcmp (argv[1], "usage") == 0)
 			return service_usage ();
 
-		/* pass throught, argv[2] is NULL */
-	case 3:
 		if (strcmp (argv[1], "start") == 0)
 			return do_service_start (silent, 0);
 
@@ -338,6 +336,6 @@ int main (int argc, char *argv[])
 
 	fprintf (stderr, "usage:\n"
 			 "\tyonk-service (reload|status|usage)\n"
-			 "\tyonk-service [-d] (start|stop|restart) [opts]\n");
+			 "\tyonk-service [-d] (start|stop|restart)\n");
 	return 1;
 }
