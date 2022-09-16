@@ -153,10 +153,8 @@ static pid_t service_pid (void)
 	if ((f = fopen (pidfile, "r")) == NULL)
 		return -1;
 
-	if (fscanf (f, "%ld", &pid) != 1) {
-		warnx ("W: broken pidfile: %s", pidfile);
+	if (fscanf (f, "%ld", &pid) != 1)
 		pid = -1;
-	}
 
 	fclose (f);
 	return pid;
