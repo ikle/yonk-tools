@@ -162,29 +162,23 @@ static pid_t service_pid (void)
 	return pid;
 }
 
-static int service_status (int silent)
+static int service_is_running (void)
 {
-	int status;
 	pid_t pid;
 	char path[32];  /* strlen ("/proc/" + (2^64 - 1)) = 24 */
 
 	if ((pid = service_pid ()) == -1)
-		status = 1;
-	else if (kill (pid, 0) == 0)
-		status = 0;
-	else if (errno == ESRCH)
-		status = 1;
-	else {
-		snprintf (path, sizeof (path), "/proc/%lu",
-			  (unsigned long) pid);
-		status = access (path, F_OK) == 0 ? 0 : 1;
-	}
+		return 0;
 
-	if (!silent)
-		fprintf (stderr, "Service %s is %srunning\n", desc,
-			 status == 0 ? "" : "not ");
+	if (kill (pid, 0) == 0)
+		return 1;
 
-	return status;
+	if (errno == ESRCH)
+		return 0;
+
+	snprintf (path, sizeof (path), "/proc/%lu", (unsigned long) pid);
+
+	return access (path, F_OK) == 0;
 }
 
 static int service_reload (int silent)
@@ -217,7 +211,7 @@ static int service_start (const char *opts, int silent, int restart)
 		return 0;
 	}
 
-	if (service_status (1) == 0) {
+	if (service_is_running ()) {
 		if (!silent)
 			fprintf (stderr, "Service %s already running\n", desc);
 
@@ -251,7 +245,7 @@ static int service_stop (const char *opts, int silent, int restart)
 	char *cmd;
 	int status;
 
-	if (service_status (1) != 0) {
+	if (!service_is_running ()) {
 		print_status ("Stop", desc, 1, silent | restart);
 		return 0;
 	}
@@ -277,6 +271,17 @@ static int service_stop (const char *opts, int silent, int restart)
 	return status;
 }
 
+static int do_service_status (int silent)
+{
+	int ok = service_is_running ();
+
+	if (!silent)
+		fprintf (stderr, "Service %s is %srunning\n", desc,
+			 ok ? "" : "not ");
+
+	return ok ? 0 : 1;
+}
+
 static int service_usage (void)
 {
 	fprintf (stderr, "usage:\n\t/etc/init.d/%s "
@@ -300,7 +305,7 @@ int main (int argc, char *argv[])
 	switch (argc) {
 	case 2:
 		if (strcmp (argv[1], "status") == 0)
-			return service_status (silent);
+			return do_service_status (silent);
 
 		if (strcmp (argv[1], "reload") == 0)
 			return service_reload (silent);
