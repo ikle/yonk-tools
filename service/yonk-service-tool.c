@@ -191,29 +191,17 @@ static int service_reload (void)
 
 #define START_FMT  "start-stop-daemon -q -S -p %s -x %s %s"
 
-static int service_start (int silent, int restart)
+static int service_start (void)
 {
 	char *args = getenv ("ARGS");
 	const char *fmt = (args == NULL) ? START_FMT : START_FMT " -- %s";
 	const char *bg = daemonize ? "-m -b" : "";
 	int len;
 	char *cmd;
-	int status;
+	int ok;
 
-	if (conf != NULL && access (conf, R_OK) != 0) {
-		print_status ("Start", desc, -1, silent);
-		return 0;
-	}
-
-	if (service_is_running ()) {
-		if (!silent)
-			fprintf (stderr, "%s already running\n", desc);
-
-		return 0;
-	}
-
-	if (!silent)
-		fprintf (stderr, "\rStarting %s...", desc);
+	if (service_is_running ())
+		return -1;
 
 	len = snprintf (NULL, 0, fmt, pidfile, daemon_path, bg, args) + 1;
 
@@ -221,11 +209,10 @@ static int service_start (int silent, int restart)
 		err (1, "E");
 
 	snprintf (cmd, len, fmt, pidfile, daemon_path, bg, args);
-	status = system (cmd);
+	ok = system (cmd) == 0;
 	free (cmd);
   
-	print_status (restart ? "Restart" : "Start", desc, status == 0, silent);
-	return status;
+	return ok;
 }
 
 static int service_stop (void)
@@ -266,6 +253,29 @@ static int do_service_reload (int silent)
 
 	print_status ("Reload", desc, ok, silent);
 	return ok ? 0 : 1;
+}
+
+static int do_service_start (int silent, int restart)
+{
+	int ok;
+
+	if (conf != NULL && access (conf, R_OK) != 0) {
+		print_status ("Start", desc, -1, silent);
+		return 0;
+	}
+
+	if (!silent)
+		fprintf (stderr, "\rStarting %s...", desc);
+
+	if ((ok = service_start ()) < 0) {
+		if (!silent)
+			fprintf (stderr, "\r%s already running\n", desc);
+
+		return 0;
+	}
+
+	print_status (restart ? "Restart" : "Start", desc, ok, silent);
+	return ok > 0 ? 0 : 1;
 }
 
 static int do_service_stop (int silent, int restart)
@@ -315,14 +325,14 @@ int main (int argc, char *argv[])
 		/* pass throught, argv[2] is NULL */
 	case 3:
 		if (strcmp (argv[1], "start") == 0)
-			return service_start (silent, 0);
+			return do_service_start (silent, 0);
 
 		if (strcmp (argv[1], "stop") == 0)
 			return do_service_stop (silent, 0);
 
 		if (strcmp (argv[1], "restart") == 0) {
 			(void) do_service_stop  (silent, 1);
-			return service_start (silent, 1);
+			return do_service_start (silent, 1);
 		}
 	}
 
