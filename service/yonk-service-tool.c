@@ -103,7 +103,6 @@ static int do_service_stop (struct service *o, int silent, int restart)
 int main (int argc, char *argv[])
 {
 	struct service o;
-
 	int silent = !isatty (fileno (stderr));
 
 	service_init (&o);
