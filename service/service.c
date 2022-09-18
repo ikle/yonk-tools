@@ -75,7 +75,7 @@ int service_is_running (struct service *o)
 	pid_t pid;
 	char path[32];  /* strlen ("/proc/" + (2^64 - 1)) = 24 */
 
-	if ((pid = service_pid (o)) == -1)
+	if ((pid = service_pid (o)) < 0)
 		return 0;
 
 	if (kill (pid, 0) == 0)
@@ -93,7 +93,7 @@ int service_reload (struct service *o)
 {
 	pid_t pid;
 
-	if ((pid = service_pid (o)) == -1)
+	if ((pid = service_pid (o)) < 0)
 		return 0;
 
 	return kill (pid, SIGHUP) == 0;
@@ -130,7 +130,7 @@ int service_stop (struct service *o, int verbose)
 	pid_t pid;
 	int timeout;
 
-	if ((pid = service_pid (o)) == -1)
+	if ((pid = service_pid (o)) < 0)
 		return 0;
 
 	if (kill (pid, SIGTERM) != 0)
