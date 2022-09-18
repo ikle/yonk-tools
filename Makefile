@@ -2,7 +2,7 @@ DESCRIPTION = Yonk tools
 URL = https://github.com/ikle/yonk-tools
 
 LIBVER	= 0
-LIBREV	= 1.25
+LIBREV	= 1.26
 
 CHILDS	= service terminal
 

@@ -19,6 +19,8 @@
 
 void service_init (struct service *o)
 {
+	const char *p;
+
 	o->bundle = getenv ("BUNDLE");
 
 	if ((o->name = getenv ("NAME")) == NULL)
@@ -27,29 +29,25 @@ void service_init (struct service *o)
 	if ((o->desc = getenv ("DESC")) == NULL)
 		errx (1, "E: service description required");
 
-	if ((o->daemon = getenv ("DAEMON")) == NULL) {
-		static char buf[128];
+	if ((p = getenv ("DAEMON")) != NULL)
+		snprintf (o->daemon, sizeof (o->daemon), "%s", p);
+	else
+	if (o->bundle != NULL)
+		snprintf (o->daemon, sizeof (o->daemon), "/usr/lib/%s/%s",
+			  o->bundle, o->name);
+	else
+		snprintf (o->daemon, sizeof (o->daemon), "/usr/sbin/%s",
+			  o->name);
 
-		if (o->bundle != NULL)
-			snprintf (buf, sizeof (buf), "/usr/lib/%s/%s",
-				  o->bundle, o->name);
-		else
-			snprintf (buf, sizeof (buf), "/usr/sbin/%s", o->name);
-
-		o->daemon = buf;
-	}
-
-	if ((o->pidfile = getenv ("PIDFILE")) == NULL) {
-		static char buf[128];
-
-		if (o->bundle != NULL)
-			snprintf (buf, sizeof (buf), "/var/run/%s/%s.pid",
-				  o->bundle, o->name);
-		else
-			snprintf (buf, sizeof (buf), "/var/run/%s.pid", o->name);
-
-		o->pidfile = buf;
-	}
+	if ((p = getenv ("PIDFILE")) != NULL)
+		snprintf (o->pidfile, sizeof (o->pidfile), "%s", p);
+	else
+	if (o->bundle != NULL)
+		snprintf (o->pidfile, sizeof (o->pidfile), "/var/run/%s/%s.pid",
+			  o->bundle, o->name);
+	else
+		snprintf (o->pidfile, sizeof (o->pidfile), "/var/run/%s.pid",
+			  o->name);
 
 	o->conf = getenv ("CONF");
 	o->daemonize = 0;

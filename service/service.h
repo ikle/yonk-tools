@@ -10,8 +10,10 @@
 #define SERVICE_H  1
 
 struct service {
-	const char *bundle, *name, *desc, *daemon, *pidfile, *conf;
+	const char *bundle, *name, *desc, *conf;
 	int daemonize;
+
+	char daemon[128], pidfile[128];
 };
 
 void service_init (struct service *o);
