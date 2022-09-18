@@ -18,80 +18,9 @@
 #include <signal.h>
 #include <syslog.h>
 
-#include <curses.h>
-#include <term.h>
+#include "term-status.h"
 
 static int daemonize;
-static char *cuf, *el, *setaf, *op;
-
-static void term_init (void)
-{
-	char *term = getenv ("TERM");
-	int err;
-
-	if (!isatty (fileno (stderr)))
-		return;
-
-	if (term == NULL || term[0] == '\0')
-		term = "ansi";
-
-	if (setupterm (term, 1, &err) != OK)
-		return;
-
-	cuf   = tigetstr ("cuf");	/* cursor forward	*/
-	el    = tigetstr ("el");	/* clear to end of line	*/
-	setaf = tigetstr ("setaf");	/* set foreground color	*/
-	op    = tigetstr ("op");	/* set default attrs	*/
-}
-
-static void term_pos (FILE *to, int pos)
-{
-	if (cuf == NULL)
-		return;
-
-	fprintf (to, "\r");
-
-	if (pos < 0)
-		pos += columns;
-
-	fprintf (to, "%s", tiparm (cuf, pos));
-}
-
-static void term_setaf (FILE *to, int color)
-{
-	if (setaf != NULL)
-		fprintf (to, "%s", tiparm (setaf, color));
-}
-
-static void term_op (FILE *to)
-{
-	if (op != NULL)
-		fprintf (to, "%s", tiparm (op));
-}
-
-static
-void print_term_status (FILE *to, const char *verb, const char *desc, int ok)
-{
-	fprintf (to, "\r%s%s %s", tiparm (el), verb, desc);
-
-	term_pos (to, -8);
-	fprintf (to, "[ ");
-
-	if (ok > 0) {
-		term_setaf (to, COLOR_GREEN);
-		fprintf (to, " ok ");
-	}
-	else if (ok < 0) {
-		term_setaf (to, COLOR_YELLOW);
-		fprintf (to, "skip");
-	}
-	else {
-		term_setaf (to, COLOR_RED);
-		fprintf (to, "fail");
-	}
-
-	term_op (to); fprintf (to, " ]\n");
-}
 
 static
 void print_status (const char *verb, const char *desc, int ok, int silent)
@@ -101,7 +30,7 @@ void print_status (const char *verb, const char *desc, int ok, int silent)
 		ok > 0 ? "ok" : ok < 0 ? "skipped" : "failed");
 
 	if (!silent)
-		print_term_status (stderr, verb, desc, ok);
+		term_show_status (stderr, verb, desc, ok);
 }
 
 static char *bundle, *name, *desc, *daemon_path, *pidfile, *conf;
@@ -313,7 +242,7 @@ int main (int argc, char *argv[])
 	int silent = !isatty (fileno (stderr));
 
 	service_init ();
-	term_init ();
+	term_init (stderr);
 
 	if (argc > 1 && strcmp (argv[1], "-d") == 0)
 		daemonize = 1, --argc, ++argv;
