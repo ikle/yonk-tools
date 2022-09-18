@@ -106,9 +106,8 @@ int service_start (struct service *o)
 	char *args = getenv ("ARGS");
 	const char *fmt = (args == NULL) ? START_FMT : START_FMT " -- %s";
 	const char *bg = o->daemonize ? "-m -b" : "";
-	int len;
+	int len, ok;
 	char *cmd;
-	int ok;
 
 	if (service_is_running (o))
 		return -1;
