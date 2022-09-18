@@ -20,7 +20,10 @@
 
 #include "term-status.h"
 
-static int daemonize;
+struct service {
+	const char *bundle, *name, *desc, *daemon, *pidfile, *conf;
+	int daemonize;
+};
 
 static
 void print_status (const char *verb, const char *desc, int ok, int silent)
@@ -33,53 +36,52 @@ void print_status (const char *verb, const char *desc, int ok, int silent)
 		term_show_status (stderr, verb, desc, ok);
 }
 
-static char *bundle, *name, *desc, *daemon_path, *pidfile, *conf;
-
-static void service_init (void)
+void service_init (struct service *o)
 {
-	bundle = getenv ("BUNDLE");
+	o->bundle = getenv ("BUNDLE");
 
-	if ((name = getenv ("NAME")) == NULL)
+	if ((o->name = getenv ("NAME")) == NULL)
 		errx (1, "E: service name required");
 
-	if ((desc = getenv ("DESC")) == NULL)
+	if ((o->desc = getenv ("DESC")) == NULL)
 		errx (1, "E: service description required");
 
-	if ((daemon_path = getenv ("DAEMON")) == NULL) {
+	if ((o->daemon = getenv ("DAEMON")) == NULL) {
 		static char buf[128];
 
-		if (bundle != NULL)
+		if (o->bundle != NULL)
 			snprintf (buf, sizeof (buf), "/usr/lib/%s/%s",
-				  bundle, name);
+				  o->bundle, o->name);
 		else
-			snprintf (buf, sizeof (buf), "/usr/sbin/%s", name);
+			snprintf (buf, sizeof (buf), "/usr/sbin/%s", o->name);
 
-		daemon_path = buf;
+		o->daemon = buf;
 	}
 
-	if ((pidfile = getenv ("PIDFILE")) == NULL) {
+	if ((o->pidfile = getenv ("PIDFILE")) == NULL) {
 		static char buf[128];
 
-		if (bundle != NULL)
+		if (o->bundle != NULL)
 			snprintf (buf, sizeof (buf), "/var/run/%s/%s.pid",
-				  bundle, name);
+				  o->bundle, o->name);
 		else
-			snprintf (buf, sizeof (buf), "/var/run/%s.pid", name);
+			snprintf (buf, sizeof (buf), "/var/run/%s.pid", o->name);
 
-		pidfile = buf;
+		o->pidfile = buf;
 	}
 
-	conf = getenv ("CONF");
+	o->conf = getenv ("CONF");
+	o->daemonize = 0;
 
-	openlog (name, 0, LOG_DAEMON);
+	openlog (o->name, 0, LOG_DAEMON);
 }
 
-static pid_t service_pid (void)
+static pid_t service_pid (struct service *o)
 {
 	FILE *f;
 	long pid;
 
-	if ((f = fopen (pidfile, "r")) == NULL)
+	if ((f = fopen (o->pidfile, "r")) == NULL)
 		return -1;
 
 	if (fscanf (f, "%ld", &pid) != 1)
@@ -89,12 +91,12 @@ static pid_t service_pid (void)
 	return pid;
 }
 
-static int service_is_running (void)
+int service_is_running (struct service *o)
 {
 	pid_t pid;
 	char path[32];  /* strlen ("/proc/" + (2^64 - 1)) = 24 */
 
-	if ((pid = service_pid ()) == -1)
+	if ((pid = service_pid (o)) == -1)
 		return 0;
 
 	if (kill (pid, 0) == 0)
@@ -108,11 +110,11 @@ static int service_is_running (void)
 	return access (path, F_OK) == 0;
 }
 
-static int service_reload (void)
+int service_reload (struct service *o)
 {
 	pid_t pid;
 
-	if ((pid = service_pid ()) == -1)
+	if ((pid = service_pid (o)) == -1)
 		return 0;
 
 	return kill (pid, SIGHUP) == 0;
@@ -120,42 +122,42 @@ static int service_reload (void)
 
 #define START_FMT  "start-stop-daemon -q -S -p %s -x %s %s"
 
-static int service_start (void)
+int service_start (struct service *o)
 {
 	char *args = getenv ("ARGS");
 	const char *fmt = (args == NULL) ? START_FMT : START_FMT " -- %s";
-	const char *bg = daemonize ? "-m -b" : "";
+	const char *bg = o->daemonize ? "-m -b" : "";
 	int len;
 	char *cmd;
 	int ok;
 
-	if (service_is_running ())
+	if (service_is_running (o))
 		return -1;
 
-	len = snprintf (NULL, 0, fmt, pidfile, daemon_path, bg, args) + 1;
+	len = snprintf (NULL, 0, fmt, o->pidfile, o->daemon, bg, args) + 1;
 
 	if ((cmd = malloc (len)) == NULL)
 		err (1, "E");
 
-	snprintf (cmd, len, fmt, pidfile, daemon_path, bg, args);
+	snprintf (cmd, len, fmt, o->pidfile, o->daemon, bg, args);
 	ok = system (cmd) == 0;
 	free (cmd);
   
 	return ok;
 }
 
-static int service_stop (int verbose)
+int service_stop (struct service *o, int verbose)
 {
 	pid_t pid;
 	int timeout;
 
-	if ((pid = service_pid ()) == -1)
+	if ((pid = service_pid (o)) == -1)
 		return 0;
 
 	if (kill (pid, SIGTERM) != 0)
 		return 0;
 
-	for (timeout = 5; service_is_running () && timeout > 0; --timeout) {
+	for (timeout = 5; service_is_running (o) && timeout > 0; --timeout) {
 		if (verbose)
 			fputc ('.', stderr);
 
@@ -165,108 +167,110 @@ static int service_stop (int verbose)
 	if (timeout == 0 && kill (pid, SIGKILL) != 0)
 		return 0;
 
-	(void) unlink (pidfile);
+	(void) unlink (o->pidfile);
 	return 1;
 }
 
-static int do_service_status (int silent)
+static int do_service_status (struct service *o, int silent)
 {
-	int ok = service_is_running ();
+	int ok = service_is_running (o);
 
 	if (!silent)
-		fprintf (stderr, "Service %s is %srunning\n", desc,
+		fprintf (stderr, "Service %s is %srunning\n", o->desc,
 			 ok ? "" : "not ");
 
 	return ok ? 0 : 1;
 }
 
-static int do_service_reload (int silent)
+static int do_service_reload (struct service *o, int silent)
 {
-	int ok = service_reload ();
+	int ok = service_reload (o);
 
-	print_status ("Reload", desc, ok, silent);
+	print_status ("Reload", o->desc, ok, silent);
 	return ok ? 0 : 1;
 }
 
-static int do_service_usage (void)
+static int do_service_usage (struct service *o)
 {
 	fprintf (stderr, "usage:\n\t/etc/init.d/%s "
-			 "(start|stop|status|reload|restart)\n", name);
+			 "(start|stop|status|reload|restart)\n", o->name);
 	return 0;
 }
 
-static int do_service_start (int silent, int restart)
+static int do_service_start (struct service *o, int silent, int restart)
 {
 	int ok;
 
-	if (access (daemon_path, X_OK) != 0)
+	if (access (o->daemon, X_OK) != 0)
 		return 0;
 
-	if (conf != NULL && access (conf, R_OK) != 0) {
-		print_status ("Start", desc, -1, silent);
+	if (o->conf != NULL && access (o->conf, R_OK) != 0) {
+		print_status ("Start", o->desc, -1, silent);
 		return 0;
 	}
 
 	if (!silent)
-		fprintf (stderr, "\rStarting %s...", desc);
+		fprintf (stderr, "\rStarting %s...", o->desc);
 
-	if ((ok = service_start ()) < 0) {
+	if ((ok = service_start (o)) < 0) {
 		if (!silent)
-			fprintf (stderr, "\r%s already running\n", desc);
+			fprintf (stderr, "\r%s already running\n", o->desc);
 
 		return 0;
 	}
 
-	print_status (restart ? "Restart" : "Start", desc, ok, silent);
+	print_status (restart ? "Restart" : "Start", o->desc, ok, silent);
 	return ok > 0 ? 0 : 1;
 }
 
-static int do_service_stop (int silent, int restart)
+static int do_service_stop (struct service *o, int silent, int restart)
 {
 	int ok;
 
-	if (access (daemon_path, X_OK) != 0)
+	if (access (o->daemon, X_OK) != 0)
 		return 0;
 
 	if (!silent)
-		fprintf (stderr, "\rStopping %s..", desc);
+		fprintf (stderr, "\rStopping %s..", o->desc);
 
-	ok = service_stop (!silent);
+	ok = service_stop (o, !silent);
 
-	print_status ("Stop", desc, ok, silent | restart);
+	print_status ("Stop", o->desc, ok, silent | restart);
 	return ok ? 0 : 1;
 }
 
 int main (int argc, char *argv[])
 {
+	struct service o;
+
 	int silent = !isatty (fileno (stderr));
 
-	service_init ();
+	service_init (&o);
 	term_init (stderr);
 
 	if (argc > 1 && strcmp (argv[1], "-d") == 0)
-		daemonize = 1, --argc, ++argv;
+		o.daemonize = 1, --argc, ++argv;
 
 	switch (argc) {
 	case 2:
 		if (strcmp (argv[1], "status") == 0)
-			return do_service_status (silent);
+			return do_service_status (&o, silent);
 
 		if (strcmp (argv[1], "reload") == 0)
-			return do_service_reload (silent);
+			return do_service_reload (&o, silent);
 
 		if (strcmp (argv[1], "usage") == 0)
-			return do_service_usage ();
+			return do_service_usage (&o);
 
 		if (strcmp (argv[1], "start") == 0)
-			return do_service_start (silent, 0);
+			return do_service_start (&o, silent, 0);
 
 		if (strcmp (argv[1], "stop") == 0)
-			return do_service_stop (silent, 0);
+			return do_service_stop (&o, silent, 0);
 
 		if (strcmp (argv[1], "restart") == 0) {
-			(void) do_service_stop  (silent, 1);
-			return do_service_start (silent, 1);
+			(void) do_service_stop  (&o, silent, 1);
+			return do_service_start (&o, silent, 1);
 		}
 	}
 
