@@ -266,6 +266,9 @@ static int do_service_start (int silent, int restart)
 {
 	int ok;
 
+	if (access (daemon_path, X_OK) != 0)
+		return 0;
+
 	if (conf != NULL && access (conf, R_OK) != 0) {
 		print_status ("Start", desc, -1, silent);
 		return 0;
@@ -289,6 +292,9 @@ static int do_service_stop (int silent, int restart)
 {
 	int ok;
 
+	if (access (daemon_path, X_OK) != 0)
+		return 0;
+
 	if (!silent)
 		fprintf (stderr, "\rStopping %s...", desc);
 
@@ -304,9 +310,6 @@ int main (int argc, char *argv[])
 
 	service_init ();
 	term_init ();
-
-	if (access (daemon_path, X_OK) != 0)
-		return 0;
 
 	if (argc > 1 && strcmp (argv[1], "-d") == 0)
 		daemonize = 1, --argc, ++argv;
