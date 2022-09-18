@@ -53,7 +53,7 @@ static int do_service_reload (struct service *o, int silent)
 
 static int do_service_usage (struct service *o)
 {
-	fprintf (stderr, "usage:\n\t/etc/init.d/%s "
+	fprintf (stderr, "usage:\n\t/etc/init.d/%s [-q] "
 			 "(start|stop|status|reload|restart)\n", o->name);
 	return 0;
 }
@@ -112,6 +112,9 @@ int main (int argc, char *argv[])
 	if (argc > 1 && strcmp (argv[1], "-d") == 0)
 		o.daemonize = 1, --argc, ++argv;
 
+	if (argc > 1 && strcmp (argv[1], "-q") == 0)
+		silent = 1, --argc, ++argv;
+
 	switch (argc) {
 	case 2:
 		if (strcmp (argv[1], "status") == 0)
@@ -136,7 +139,7 @@ int main (int argc, char *argv[])
 	}
 
 	fprintf (stderr, "usage:\n"
-			 "\tyonk-service (reload|status|usage)\n"
-			 "\tyonk-service [-d] (start|stop|restart)\n");
+			 "\tyonk-service [-q] (reload|status|usage)\n"
+			 "\tyonk-service [-d] [-q] (start|stop|restart)\n");
 	return 1;
 }
