@@ -22,7 +22,7 @@
 #include "term-status.h"
 
 static
-void print_status (const char *verb, const char *desc, int ok, int silent)
+void report_status (const char *verb, const char *desc, int ok, int silent)
 {
 	syslog (ok > 0 ? LOG_NOTICE : ok < 0 ? LOG_INFO : LOG_ERR,
 		"%s %s: %s", verb, desc,
@@ -47,7 +47,7 @@ static int do_service_reload (struct service *o, int silent)
 {
 	int ok = service_reload (o);
 
-	print_status ("Reload", o->desc, ok, silent);
+	report_status ("Reload", o->desc, ok, silent);
 	return ok ? 0 : 1;
 }
 
@@ -66,7 +66,7 @@ static int do_service_start (struct service *o, int silent, int restart)
 		return 0;
 
 	if (o->conf != NULL && access (o->conf, R_OK) != 0) {
-		print_status ("Start", o->desc, -1, silent);
+		report_status ("Start", o->desc, -1, silent);
 		return 0;
 	}
 
@@ -80,7 +80,7 @@ static int do_service_start (struct service *o, int silent, int restart)
 		return 0;
 	}
 
-	print_status (restart ? "Restart" : "Start", o->desc, ok, silent);
+	report_status (restart ? "Restart" : "Start", o->desc, ok, silent);
 	return ok > 0 ? 0 : 1;
 }
 
@@ -96,7 +96,7 @@ static int do_service_stop (struct service *o, int silent, int restart)
 
 	ok = service_stop (o, !silent);
 
-	print_status ("Stop", o->desc, ok, silent | restart);
+	report_status ("Stop", o->desc, ok, silent | restart);
 	return ok ? 0 : 1;
 }
 
