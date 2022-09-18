@@ -215,7 +215,7 @@ static int service_start (void)
 	return ok;
 }
 
-static int service_stop (void)
+static int service_stop (int verbose)
 {
 	pid_t pid;
 	int timeout;
@@ -226,8 +226,12 @@ static int service_stop (void)
 	if (kill (pid, SIGTERM) != 0)
 		return 0;
 
-	for (timeout = 5; service_is_running () && timeout > 0; --timeout)
+	for (timeout = 5; service_is_running () && timeout > 0; --timeout) {
+		if (verbose)
+			fputc ('.', stderr);
+
 		sleep (1);
+	}
 
 	if (timeout == 0 && kill (pid, SIGKILL) != 0)
 		return 0;
@@ -296,9 +300,9 @@ static int do_service_stop (int silent, int restart)
 		return 0;
 
 	if (!silent)
-		fprintf (stderr, "\rStopping %s...", desc);
+		fprintf (stderr, "\rStopping %s..", desc);
 
-	ok = service_stop ();
+	ok = service_stop (!silent);
 
 	print_status ("Stop", desc, ok, silent | restart);
 	return ok ? 0 : 1;
