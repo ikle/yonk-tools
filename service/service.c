@@ -133,7 +133,7 @@ int service_stop (struct service *o, int verbose)
 		return -1;
 
 	if (kill (pid, SIGTERM) != 0)
-		return 0;
+		return errno == ESRCH ? -1 : 0;
 
 	for (timeout = 500; service_is_running (o) && timeout > 0; --timeout) {
 		if (verbose)
@@ -142,7 +142,7 @@ int service_stop (struct service *o, int verbose)
 		usleep (10000);
 	}
 
-	if (timeout == 0 && kill (pid, SIGKILL) != 0)
+	if (timeout == 0 && kill (pid, SIGKILL) != 0 && errno != ESRCH)
 		return 0;
 
 	(void) unlink (o->pidfile);
