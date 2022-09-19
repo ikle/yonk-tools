@@ -135,11 +135,11 @@ int service_stop (struct service *o, int verbose)
 	if (kill (pid, SIGTERM) != 0)
 		return 0;
 
-	for (timeout = 5; service_is_running (o) && timeout > 0; --timeout) {
+	for (timeout = 500; service_is_running (o) && timeout > 0; --timeout) {
 		if (verbose)
 			fputc ('.', stderr);
 
-		sleep (1);
+		usleep (10000);
 	}
 
 	if (timeout == 0 && kill (pid, SIGKILL) != 0)
