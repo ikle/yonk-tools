@@ -130,7 +130,7 @@ int service_stop (struct service *o, int verbose)
 	int timeout;
 
 	if ((pid = service_pid (o)) < 0)
-		return 0;
+		return -1;
 
 	if (kill (pid, SIGTERM) != 0)
 		return 0;
