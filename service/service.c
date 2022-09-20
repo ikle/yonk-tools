@@ -14,8 +14,10 @@
 #include <unistd.h>
 #include <signal.h>
 #include <syslog.h>
+#include <wordexp.h>
 
 #include "service.h"
+#include "spawn.h"
 
 void service_init (struct service *o)
 {
@@ -99,28 +101,25 @@ int service_reload (struct service *o)
 	return kill (pid, SIGHUP) == 0;
 }
 
-#define START_FMT  "start-stop-daemon -q -S -p %s -x %s %s"
-
 int service_start (struct service *o)
 {
-	char *args = getenv ("ARGS");
-	const char *fmt = (args == NULL) ? START_FMT : START_FMT " -- %s";
-	const char *bg = o->daemonize ? "-m -b" : "";
-	int len, ok;
-	char *cmd;
+	const char *pidfile = o->daemonize ? o->pidfile : NULL;
+	wordexp_t we;
+	int ok;
 
 	if (service_is_running (o))
 		return -1;
 
-	len = snprintf (NULL, 0, fmt, o->pidfile, o->daemon, bg, args) + 1;
+	we.we_offs = 1;
 
-	if ((cmd = malloc (len)) == NULL)
-		err (1, "E");
+	if (wordexp ("$ARGS", &we, WRDE_DOOFFS) != 0)
+		return 0;
 
-	snprintf (cmd, len, fmt, o->pidfile, o->daemon, bg, args);
-	ok = system (cmd) == 0;
-	free (cmd);
-  
+	we.we_wordv[0] = o->daemon;
+	ok = spawn_ve (pidfile, we.we_wordv, NULL) == 0;
+
+	we.we_wordv[0] = NULL;
+	wordfree (&we);
 	return ok;
 }
 
