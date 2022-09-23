@@ -16,6 +16,8 @@
 #include <syslog.h>
 #include <wordexp.h>
 
+extern char **environ;
+
 #include "service.h"
 #include "spawn.h"
 
@@ -123,7 +125,7 @@ int service_start (struct service *o)
 		return 0;
 
 	we.we_wordv[0] = o->daemon;
-	ok = spawn_ve (pidfile, we.we_wordv, NULL) == 0;
+	ok = spawn_ve (pidfile, we.we_wordv, environ) == 0;
 
 	we.we_wordv[0] = NULL;
 	wordfree (&we);
