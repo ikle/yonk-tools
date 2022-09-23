@@ -103,6 +103,7 @@ int service_reload (struct service *o)
 
 int service_start (struct service *o)
 {
+	const char *args;
 	const char *pidfile = o->daemonize ? o->pidfile : NULL;
 	wordexp_t we;
 	int ok;
@@ -110,9 +111,15 @@ int service_start (struct service *o)
 	if (service_is_running (o))
 		return -1;
 
+	if (setenv ("PIDFILE", o->pidfile, 1) != 0)
+		return 0;
+
+	if ((args = getenv ("ARGS")) == NULL)
+		args = "";
+
 	we.we_offs = 1;
 
-	if (wordexp ("$ARGS", &we, WRDE_DOOFFS) != 0)
+	if (wordexp (args, &we, WRDE_DOOFFS) != 0)
 		return 0;
 
 	we.we_wordv[0] = o->daemon;
