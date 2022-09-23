@@ -10,6 +10,9 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include <sys/stat.h>
 
 #include <unistd.h>
 #include <signal.h>
@@ -20,6 +23,24 @@ extern char **environ;
 
 #include "service.h"
 #include "spawn.h"
+
+static int make_home (char *path, mode_t mode)
+{
+	char *p;
+	int ok;
+
+	if ((p = strrchr (path, '/')) == NULL)
+		errx (1, "E: pid-file path must be absolute");
+
+	*p = '\0';
+
+	ok = path[0] == '\0' ||
+	     (make_home (path, mode) &&
+	      (mkdir (path, mode) == 0 || errno == EEXIST));
+
+	*p = '/';
+	return ok;
+}
 
 void service_init (struct service *o, const char *device, int daemonize)
 {
@@ -125,6 +146,9 @@ int service_start (struct service *o)
 
 	if (setenv ("PIDFILE", o->pidfile, 1) != 0 ||
 	    (o->device != NULL && setenv ("DEVICE", o->device, 1) != 0))
+		return 0;
+
+	if (!make_home (o->pidfile, 0755))
 		return 0;
 
 	if ((args = getenv ("ARGS")) == NULL)
