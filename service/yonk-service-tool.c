@@ -112,8 +112,9 @@ int main (int argc, char *argv[])
 		silent = 1, --argc, ++argv;
 
 	switch (argc) {
+	case 3:
 	case 2:
-		service_init (&o, daemonize);
+		service_init (&o, argv[2], daemonize);
 		term_init (stderr);
 
 		if (strcmp (argv[1], "status") == 0)

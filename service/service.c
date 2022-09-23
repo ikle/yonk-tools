@@ -21,17 +21,23 @@ extern char **environ;
 #include "service.h"
 #include "spawn.h"
 
-void service_init (struct service *o, int daemonize)
+void service_init (struct service *o, const char *device, int daemonize)
 {
 	const char *p;
 
 	o->bundle = getenv ("BUNDLE");
+	o->device = device;
 
 	if ((o->name = getenv ("NAME")) == NULL)
 		errx (1, "E: service name required");
 
-	if ((o->desc = getenv ("DESC")) == NULL)
+	if ((p = getenv ("DESC")) == NULL)
 		errx (1, "E: service description required");
+
+	if (device != NULL)
+		snprintf (o->desc, sizeof (o->desc), "%s on %s", p, device);
+	else
+		snprintf (o->desc, sizeof (o->desc), "%s", p);
 
 	if ((p = getenv ("DAEMON")) != NULL)
 		snprintf (o->daemon, sizeof (o->daemon), "%s", p);
@@ -49,6 +55,10 @@ void service_init (struct service *o, int daemonize)
 	if (o->bundle != NULL)
 		snprintf (o->pidfile, sizeof (o->pidfile), "/var/run/%s/%s.pid",
 			  o->bundle, o->name);
+	else
+	if (device != NULL)
+		snprintf (o->pidfile, sizeof (o->pidfile), "/var/run/%s/%s.pid",
+			  o->name, device);
 	else
 		snprintf (o->pidfile, sizeof (o->pidfile), "/var/run/%s.pid",
 			  o->name);
@@ -113,7 +123,8 @@ int service_start (struct service *o)
 	if (service_is_running (o))
 		return -1;
 
-	if (setenv ("PIDFILE", o->pidfile, 1) != 0)
+	if (setenv ("PIDFILE", o->pidfile, 1) != 0 ||
+	    (o->device != NULL && setenv ("DEVICE", o->device, 1) != 0))
 		return 0;
 
 	if ((args = getenv ("ARGS")) == NULL)
