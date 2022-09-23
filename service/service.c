@@ -21,7 +21,7 @@ extern char **environ;
 #include "service.h"
 #include "spawn.h"
 
-void service_init (struct service *o)
+void service_init (struct service *o, int daemonize)
 {
 	const char *p;
 
@@ -54,7 +54,7 @@ void service_init (struct service *o)
 			  o->name);
 
 	o->conf = getenv ("CONF");
-	o->daemonize = 0;
+	o->daemonize = daemonize;
 
 	openlog (o->name, 0, LOG_DAEMON);
 }

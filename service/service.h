@@ -16,7 +16,7 @@ struct service {
 	char daemon[128], pidfile[128];
 };
 
-void service_init (struct service *o);
+void service_init (struct service *o, int daemonize);
 
 int service_is_running	(struct service *o);
 int service_reload	(struct service *o);

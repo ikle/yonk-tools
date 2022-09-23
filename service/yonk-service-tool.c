@@ -103,19 +103,19 @@ static int do_service_stop (struct service *o, int silent, int restart)
 int main (int argc, char *argv[])
 {
 	struct service o;
-	int silent = !isatty (fileno (stderr));
-
-	service_init (&o);
-	term_init (stderr);
+	int daemonize = 0, silent = !isatty (fileno (stderr));
 
 	if (argc > 1 && strcmp (argv[1], "-d") == 0)
-		o.daemonize = 1, --argc, ++argv;
+		daemonize = 1, --argc, ++argv;
 
 	if (argc > 1 && strcmp (argv[1], "-q") == 0)
 		silent = 1, --argc, ++argv;
 
 	switch (argc) {
 	case 2:
+		service_init (&o, daemonize);
+		term_init (stderr);
+
 		if (strcmp (argv[1], "status") == 0)
 			return do_service_status (&o, silent);
 
