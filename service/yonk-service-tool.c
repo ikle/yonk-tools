@@ -71,7 +71,7 @@ static int do_service_start (struct service *o, int silent, int restart)
 	}
 
 	if (!silent)
-		fprintf (stderr, "\rStarting %s...", o->desc);
+		fprintf (stderr, "\rStarting %s... ", o->desc);
 
 	if ((ok = service_start (o)) < 0) {
 		if (!silent)
