@@ -42,6 +42,9 @@ static int make_home (char *path, mode_t mode)
 	return ok;
 }
 
+#define make_str(s, fmt, ...) \
+	snprintf (s, sizeof (s), fmt, __VA_ARGS__)
+
 void service_init (struct service *o, const char *device, int daemonize)
 {
 	const char *p;
@@ -56,33 +59,28 @@ void service_init (struct service *o, const char *device, int daemonize)
 		errx (1, "E: service description required");
 
 	if (device != NULL)
-		snprintf (o->desc, sizeof (o->desc), "%s on %s", p, device);
+		make_str (o->desc, "%s on %s", p, device);
 	else
-		snprintf (o->desc, sizeof (o->desc), "%s", p);
+		make_str (o->desc, "%s", p);
 
 	if ((p = getenv ("DAEMON")) != NULL)
-		snprintf (o->daemon, sizeof (o->daemon), "%s", p);
+		make_str (o->daemon, "%s", p);
 	else
 	if (o->bundle != NULL)
-		snprintf (o->daemon, sizeof (o->daemon), "/usr/lib/%s/%s",
-			  o->bundle, o->name);
+		make_str (o->daemon, "/usr/lib/%s/%s", o->bundle, o->name);
 	else
-		snprintf (o->daemon, sizeof (o->daemon), "/usr/sbin/%s",
-			  o->name);
+		make_str (o->daemon, "/usr/sbin/%s", o->name);
 
 	if ((p = getenv ("PIDFILE")) != NULL)
-		snprintf (o->pidfile, sizeof (o->pidfile), "%s", p);
+		make_str (o->pidfile, "%s", p);
 	else
 	if (o->bundle != NULL)
-		snprintf (o->pidfile, sizeof (o->pidfile), "/var/run/%s/%s.pid",
-			  o->bundle, o->name);
+		make_str (o->pidfile, "/var/run/%s/%s.pid", o->bundle, o->name);
 	else
 	if (device != NULL)
-		snprintf (o->pidfile, sizeof (o->pidfile), "/var/run/%s/%s.pid",
-			  o->name, device);
+		make_str (o->pidfile, "/var/run/%s/%s.pid", o->name, device);
 	else
-		snprintf (o->pidfile, sizeof (o->pidfile), "/var/run/%s.pid",
-			  o->name);
+		make_str (o->pidfile, "/var/run/%s.pid", o->name);
 
 	o->conf = getenv ("CONF");
 	o->daemonize = daemonize;
