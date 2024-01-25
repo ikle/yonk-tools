@@ -1,7 +1,7 @@
 /*
  * Service Management helpers
  *
- * Copyright (c) 2016-2022 Alexei A. Smekalkine <ikle@ikle.ru>
+ * Copyright (c) 2016-2024 Alexei A. Smekalkine <ikle@ikle.ru>
  *
  * SPDX-License-Identifier: BSD-2-Clause
  */
@@ -94,10 +94,10 @@ static pid_t service_pid (struct service *o)
 	long pid;
 
 	if ((f = fopen (o->pidfile, "r")) == NULL)
-		return -1;
+		return 0;
 
 	if (fscanf (f, "%ld", &pid) != 1)
-		pid = -1;
+		pid = 0;
 
 	fclose (f);
 	return pid;
@@ -108,7 +108,7 @@ int service_is_running (struct service *o)
 	pid_t pid;
 	char path[32];  /* strlen ("/proc/" + (2^64 - 1)) = 24 */
 
-	if ((pid = service_pid (o)) < 0)
+	if ((pid = service_pid (o)) == 0)
 		return 0;
 
 	if (kill (pid, 0) == 0)
@@ -126,7 +126,7 @@ int service_reload (struct service *o)
 {
 	pid_t pid;
 
-	if ((pid = service_pid (o)) < 0)
+	if ((pid = service_pid (o)) == 0)
 		return 0;
 
 	return kill (pid, SIGHUP) == 0;
@@ -170,7 +170,7 @@ int service_stop (struct service *o, int verbose)
 	pid_t pid;
 	int timeout;
 
-	if ((pid = service_pid (o)) < 0)
+	if ((pid = service_pid (o)) == 0)
 		return -1;
 
 	if (kill (pid, SIGTERM) != 0)
