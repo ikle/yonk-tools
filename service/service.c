@@ -176,7 +176,7 @@ int service_stop (struct service *o, int verbose)
 	if (kill (pid, SIGTERM) != 0)
 		return errno == ESRCH ? -1 : 0;
 
-	for (timeout = 500; service_is_running (o) && timeout > 0; --timeout) {
+	for (timeout = 500; kill (pid, 0) == 0 && timeout > 0; --timeout) {
 		if (verbose && timeout % 20 == 0)
 			fputc ('.', stderr);
 
