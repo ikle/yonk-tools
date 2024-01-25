@@ -45,7 +45,8 @@ static int make_home (char *path, mode_t mode)
 #define make_str(s, fmt, ...) \
 	snprintf (s, sizeof (s), fmt, __VA_ARGS__)
 
-void service_init (struct service *o, const char *device, int daemonize)
+void service_init (struct service *o, const char *device, int daemonize,
+		   int group)
 {
 	const char *p;
 
@@ -84,6 +85,7 @@ void service_init (struct service *o, const char *device, int daemonize)
 
 	o->conf = getenv ("CONF");
 	o->daemonize = daemonize;
+	o->group     = group;
 
 	openlog (o->name, 0, LOG_DAEMON);
 }
@@ -172,6 +174,9 @@ int service_stop (struct service *o, int verbose)
 
 	if ((pid = service_pid (o)) == 0)
 		return -1;
+
+	if (o->group)
+		pid = -pid;  /* terminate whole process group */
 
 	if (kill (pid, SIGTERM) != 0)
 		return errno == ESRCH ? -1 : 0;

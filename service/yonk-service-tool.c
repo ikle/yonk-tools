@@ -103,10 +103,13 @@ static int do_service_stop (struct service *o, int silent, int restart)
 int main (int argc, char *argv[])
 {
 	struct service o;
-	int daemonize = 0, silent = !isatty (fileno (stderr));
+	int daemonize = 0, group = 0, silent = !isatty (fileno (stderr));
 
 	if (argc > 1 && strcmp (argv[1], "-d") == 0)
 		daemonize = 1, --argc, ++argv;
+
+	if (argc > 1 && strcmp (argv[1], "-g") == 0)
+		group = 1, --argc, ++argv;
 
 	if (argc > 1 && strcmp (argv[1], "-q") == 0)
 		silent = 1, --argc, ++argv;
@@ -114,7 +117,7 @@ int main (int argc, char *argv[])
 	switch (argc) {
 	case 3:
 	case 2:
-		service_init (&o, argv[2], daemonize);
+		service_init (&o, argv[2], daemonize, group);
 		term_init (stderr);
 
 		if (strcmp (argv[1], "status") == 0)
@@ -140,6 +143,6 @@ int main (int argc, char *argv[])
 
 	fprintf (stderr, "usage:\n"
 			 "\tyonk-service [-q] (reload|status|usage)\n"
-			 "\tyonk-service [-d] [-q] (start|stop|restart)\n");
+			 "\tyonk-service [-d] [-g] [-q] (start|stop|restart)\n");
 	return 1;
 }
