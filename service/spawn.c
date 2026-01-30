@@ -1,7 +1,7 @@
 /*
  * Run command or start daemon
  *
- * Copyright (c) 2020-2022 Alexei A. Smekalkine <ikle@ikle.ru>
+ * Copyright (c) 2020-2026 Alexei A. Smekalkine <ikle@ikle.ru>
  *
  * SPDX-License-Identifier: BSD-2-Clause
  */
@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -32,6 +33,7 @@ int spawn_ve (const char *pidfile, char *const argv[], char *const envp[])
 			if ((f = fopen (pidfile, "w")) != NULL) {
 				fprintf (f, "%ld\n", (long) getpid ());
 				fclose (f);
+				chmod (pidfile, 0644);
 			}
 		}
 
